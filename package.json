@@ -1,6 +1,6 @@
 {
   "name": "itechworld-sulu-grapesjs-bundle",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "GrapesJS page builder for Sulu",
   "private": true,
   "scripts": {

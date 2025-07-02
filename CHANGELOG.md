@@ -1,3 +1,12 @@
+## [0.1.5](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.4...0.1.5) (2025-07-02)
+
+
+### Bug Fixes
+
+* use nullsafe operator to avoid errors when comparing nullable DateTime values ([a8bf95c](https://github.com/steeven-th/SuluGrapesJsBundle/commit/a8bf95c65fe6670dcad76745c81d88914a7a2bad))
+
+
+
 ## [0.1.4](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.3...0.1.4) (2025-07-02)
 
 
