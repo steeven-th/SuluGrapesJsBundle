@@ -28,9 +28,9 @@ jobs:
           id: extract_version
           run: |
             PR_TITLE="${{ github.event.pull_request.title }}"
-            VERSION=$(echo "$PR_TITLE" | grep -oP '\d+\.\d+\.\d+')
+            VERSION=$(echo "$PR_TITLE" | grep -oP '\d+\.\d+\.\d+(?:[a-zA-Z0-9\.-]+)?')
             if [ -z "$VERSION" ]; then
-              echo "No version number found in PR title."
+              echo "No valid version (e.g. 1.2.3, 1.2.3-b, 1.2.3-beta) found in PR title: $PR_TITLE"
               exit 1
             fi
             echo "VERSION=$VERSION" >> $GITHUB_ENV
