@@ -1,0 +1,92 @@
+name: Manual Release and Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 1.2.3, 1.2.3-beta, 0.1.6-b)'
+        required: true
+
+jobs:
+  manual_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Étape 1 : Extraire le numéro de version depuis le titre du input
+      - name: Set VERSION environment variable
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # Étape 2 : Mettre à jour la version dans les fichiers
+      - name: Update version in files
+        run: |
+          VERSION=${{ env.VERSION }}
+          ESCAPED_VERSION=$(echo $VERSION | sed 's/[.[\*^$]/\\&/g')
+          sed -i "s/release-v[0-9]*\.[0-9]*\.[0-9]*/release-v$ESCAPED_VERSION/" README.md
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" composer.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" public/js/package.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+          echo "✅ Updated version to $VERSION"
+
+      # Étape 3 : Générer le changelog
+      - name: Install changelog dependencies
+        run: |
+          npm install --save-dev conventional-changelog-cli conventional-changelog-angular
+
+      - name: Generate changelog
+        run: |
+          npx conventional-changelog -p angular -i CHANGELOG.md -s
+
+      # Étape 4 : Commit et push des changements
+      - name: Commit and push changes
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "action@github.com"
+          git checkout main
+          git add README.md composer.json public/js/package.json package.json CHANGELOG.md
+          git commit -m "chore(release): update version to $VERSION"
+          git push origin main
+
+      # Étape 5 : Créer un tag
+      - name: Create and push tag
+        run: |
+          VERSION=${{ env.VERSION }}
+          git tag -a "$VERSION" -m "Release version $VERSION"
+          git push origin "$VERSION"
+
+      # Étape 6 : Créer une GitHub Release
+      - name: Generate latest changelog
+        run: |
+          npx conventional-changelog -p angular -r 1 > latest-changelog.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: "Release ${{ env.VERSION }}"
+          body_path: latest-changelog.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Étape 7 : Fusionner main dans dev pour synchroniser
+      - name: Merge main into dev
+        run: |
+          git checkout dev
+          git pull origin dev
+          git merge main
+          git push origin dev
