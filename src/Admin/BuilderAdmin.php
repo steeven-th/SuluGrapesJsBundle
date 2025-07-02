@@ -24,7 +24,7 @@ class BuilderAdmin extends Admin
         $existingToolbarActions = $existingView->getView()->getOption('toolbarActions');
 
         $existingToolbarActions[] = new ToolbarAction(
-            'itech_world.grapejs.open_builder',
+            'itech_world.grapesjs.open_builder',
             [
                 'icon' => 'su-magic-wand',
                 'type' => 'button',
