@@ -23,7 +23,7 @@ class WebsitePreviewController extends WebsiteControllerBase
         $lastModified = $parameters['lastModified'];
         $changed = $parameters['changed'];
 
-        if ($lastModified->format('Y-m-d H:i:s') < $changed->format('Y-m-d H:i:s')) {
+        if ($lastModified?->format('Y-m-d H:i:s') < $changed?->format('Y-m-d H:i:s')) {
             $parameters['is_modified'] = true;
         } else {
             $parameters['is_modified'] = false;
