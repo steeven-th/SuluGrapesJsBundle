@@ -48,7 +48,7 @@ class PageBuilderController extends AbstractController
         $changed = $page->getChanged();
         $lastModified = $page->getLastModified();
 
-        if ($lastModified->format('Y-m-d H:i:s') < $changed->format('Y-m-d H:i:s')) {
+        if ($lastModified?->format('Y-m-d H:i:s') < $changed?->format('Y-m-d H:i:s')) {
             $isModified = true;
         } else {
             $isModified = false;
