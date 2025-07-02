@@ -1,3 +1,12 @@
+## [0.1.6](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.5...0.1.6) (2025-07-02)
+
+
+### Bug Fixes
+
+* increase media fetch limit to 300 in asset provider ([2162ca6](https://github.com/steeven-th/SuluGrapesJsBundle/commit/2162ca6d25feb5f9d06b6b1502fa20f1848d566f))
+
+
+
 ## [0.1.5](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.4...0.1.5) (2025-07-02)
 
 
