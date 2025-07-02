@@ -25,7 +25,7 @@ const publishButton = document.getElementById('publish');
 
 const loadImagesAssetsFromSulu = async (locale, formats) => {
     try {
-        const response = await fetch(`/admin/api/media?locale=${locale}&filter[type]=image`, {
+        const response = await fetch(`/admin/api/media?locale=${locale}&filter[type]=image&limit=300`, {
             headers: {
                 'Accept': 'application/json',
             },
@@ -62,7 +62,7 @@ const loadImagesAssetsFromSulu = async (locale, formats) => {
 
 const loadDocumentsAssetsFromSulu = async (locale) => {
     try {
-        const response = await fetch(`/admin/api/media?locale=${locale}&filter[type]=document`, {
+        const response = await fetch(`/admin/api/media?locale=${locale}&filter[type]=document&limit=300`, {
             headers: {
                 'Accept': 'application/json',
             },
