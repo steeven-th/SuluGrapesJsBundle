@@ -3,7 +3,7 @@
   "description": "SuluGrapesJsBundle extends the Sulu CMS to offer GrapeJS editor integration in Sulu Admin for content editing",
   "type": "sulu-bundle",
   "license": "MIT",
-  "version": "0.1.6",
+  "version": "0.1.6-b",
   "keywords": [
     "sulu",
     "symfony",

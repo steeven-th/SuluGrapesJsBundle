@@ -1,3 +1,13 @@
+## [0.1.6-b](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.6...0.1.6-b) (2025-07-02)
+
+
+### Bug Fixes
+
+* add new grapesjs build ([bd9e09a](https://github.com/steeven-th/SuluGrapesJsBundle/commit/bd9e09a10efe321d3305588c8194e196f5edeabf))
+* update workflow ([d0c29b6](https://github.com/steeven-th/SuluGrapesJsBundle/commit/d0c29b66bb547f13c9ac203c127088895f44b2ed))
+
+
+
 ## [0.1.6](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.5...0.1.6) (2025-07-02)
 
 
