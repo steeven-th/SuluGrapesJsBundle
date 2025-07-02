@@ -2,7 +2,7 @@
     "name": "sulu-itech-world-sulu-grapesjs-bundle",
     "description": "SuluGrapesJsBundle extends the Sulu CMS to offer GrapesJS editor integration in Sulu Admin for content editing",
     "license": "MIT",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "peerDependencies": {
         "react": "^16.2.0 || ^17.0.0 || ^18.0.0",
         "sulu-admin-bundle": "*"

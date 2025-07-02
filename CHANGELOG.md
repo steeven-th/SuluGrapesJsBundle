@@ -1,3 +1,12 @@
+## [0.1.4](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.3...0.1.4) (2025-07-02)
+
+
+### Bug Fixes
+
+* change page template path to avoid conflict with another bundle ([b287e14](https://github.com/steeven-th/SuluGrapesJsBundle/commit/b287e14521bccf0b21b9a0cec5c1cb310bba3e06))
+
+
+
 ## [0.1.3](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.2...0.1.3) (2025-07-02)
 
 

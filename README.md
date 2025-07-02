@@ -10,7 +10,7 @@
         <img src="https://img.shields.io/badge/license-MIT-green" alt="GitHub license">
     </a>
     <a href="https://github.com/steeven-th/SuluGrapesJsBundle/releases" target="_blank">
-        <img src="https://img.shields.io/badge/release-v0.1.3-blue" alt="GitHub tag (latest SemVer)">
+        <img src="https://img.shields.io/badge/release-v0.1.4-blue" alt="GitHub tag (latest SemVer)">
     </a>
     <a href="https://sulu.io/" target="_blank">
         <img src="https://img.shields.io/badge/sulu_compatibility-%3E=2.6-cyan" alt="Sulu compatibility">
