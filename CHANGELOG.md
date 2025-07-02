@@ -1,3 +1,12 @@
+## [0.1.7](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.6-b...0.1.7) (2025-07-02)
+
+
+### Bug Fixes
+
+* add manuel workflow for release ([0b174cd](https://github.com/steeven-th/SuluGrapesJsBundle/commit/0b174cd4b3b54af3ff6cd749f6f7fca144dcf4a7))
+
+
+
 ## [0.1.6-b](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.6...0.1.6-b) (2025-07-02)
 
 
