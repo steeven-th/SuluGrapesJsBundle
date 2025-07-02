@@ -51,6 +51,9 @@ jobs:
             echo "Updated files with version: $VERSION"
 
       # Étape 3 : Générer le changelog
+      - name: Install changelog dependencies
+        run: |
+          npm install --save-dev conventional-changelog-cli conventional-changelog-angular
       - name: Generate changelog
         run: |
           npx conventional-changelog -p angular -i CHANGELOG.md -s
