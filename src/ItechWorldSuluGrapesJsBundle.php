@@ -37,7 +37,7 @@ class ItechWorldSuluGrapesJsBundle extends AbstractBundle
                 'content' => [
                     'structure' => [
                         'paths' => [
-                            'page_site' => [
+                            'builder_page' => [
                                 'path' => __DIR__ . '/../config/templates/pages',
                                 'type' => 'page',
                             ],
