@@ -1,0 +1,79 @@
+name: Auto Update Version and Create Tag
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  update_version:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      -   name: Checkout repository
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+      -   name: Set up Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: '22'
+
+      # Étape 1 : Extraire le numéro de version depuis le titre de la PR
+      -   name: Extract version from PR title
+          id: extract_version
+          run: |
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            VERSION=$(echo "$PR_TITLE" | grep -oP '\d+\.\d+\.\d+')
+            if [ -z "$VERSION" ]; then
+              echo "No version number found in PR title."
+              exit 1
+            fi
+            echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # Étape 2 : Mettre à jour la version dans les fichiers
+      -   name: Update version in files
+          run: |
+            VERSION=${{ env.VERSION }}
+            ESCAPED_VERSION=$(echo $VERSION | sed 's/[.[\*^$]/\\&/g')
+            # Mise à jour du badge dans README.md
+            sed -i "s/release-v[0-9]*\.[0-9]*\.[0-9]*/release-v$ESCAPED_VERSION/" README.md
+            # Mise à jour de la version dans composer.json
+            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" composer.json
+            # Mise à jour de la version dans assets/package.json
+            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" assets/package.json
+            # Mise à jour de la version dans package.json
+            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
+            echo "Updated files with version: $VERSION"
+
+      # Étape 3 : Générer le changelog
+      - name: Generate changelog
+        run: |
+          npx conventional-changelog -p angular -i CHANGELOG.md -s
+
+      # Étape 4 : Commit et push des changements
+      -   name: Commit and push changes
+          run: |
+            git config --local user.name "GitHub Action"
+            git config --local user.email "action@github.com"
+            git checkout main
+            git add README.md composer.json assets/package.json package.json CHANGELOG.md
+            git commit -m "chore(release): update version to $VERSION"
+            git push origin main
+
+      # Étape 5 : Créer un tag
+      -   name: Create and push tag
+          run: |
+            VERSION=${{ env.VERSION }}
+            git tag -a "$VERSION" -m "Release version $VERSION"
+            git push origin "$VERSION"
+
+      # Étape 6 : Fusionner main dans dev pour synchroniser
+      -   name: Merge main into dev
+          run: |
+            git checkout dev
+            git pull origin dev
+            git merge main
+            git push origin dev

@@ -1,0 +1,40 @@
+{
+  "grapesjs": {
+    "console_warn": {
+      "format_not_available": "⚠️ Format \"{{format}}\" indisponible pour média {{mediaId}}",
+      "save_url_missing": "⚠️ data-save-url manquant sur le conteneur {{containerId}}",
+      "publish_url_missing": "⚠️ data-publish-url manquant sur le conteneur {{containerId}}"
+    },
+    "console_error": {
+      "load_images_assets_from_sulu": "Erreur chargement médias Sulu",
+      "load_documents_assets_from_sulu": "Erreur chargement documents Sulu",
+      "publish_error": "Échec de la publication",
+      "save_error": "Échec de la sauvegarde",
+      "container_not_found": "Conteneur #{{containerId}} introuvable."
+    },
+    "errors": {
+      "server_error": "Erreur serveur"
+    },
+    "buttons": {
+      "save": "Enregistrer",
+      "publish": "Publier",
+      "choose_document": "Choisir un document"
+    },
+    "blocks": {
+      "document": "Document"
+    },
+    "document": {
+      "download": "Télécharger le document",
+      "url": "URL du document",
+      "select_modal_title": "Sélectionner un document"
+    },
+    "messages": {
+      "save_success": "Page sauvegardée avec succès",
+      "publish_success": "Page publiée avec succès"
+    },
+    "traits": {
+      "text": "Texte",
+      "link": "Lien (href)"
+    }
+  }
+}

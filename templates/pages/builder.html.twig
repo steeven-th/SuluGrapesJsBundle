@@ -1,0 +1,11 @@
+{% extends "base.html.twig" %}
+
+{% block style %}
+    <style>
+        {{ content.json_builder_css|raw }}
+    </style>
+{% endblock %}
+
+{% block content %}
+    {{ content.json_builder_html|raw }}
+{% endblock %}

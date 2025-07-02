@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<template xmlns="http://schemas.sulu.io/template/template"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xsi:schemaLocation="http://schemas.sulu.io/template/template http://schemas.sulu.io/template/template-1.0.xsd">
+    <key>builder</key>
+
+    <view>@ItechWorldSuluGrapesJs/pages/builder</view>
+    <!-- <controller>Sulu\Bundle\WebsiteBundle\Controller\DefaultController::indexAction</controller> -->
+    <controller>ItechWorld\SuluGrapesJsBundle\Controller\Website\PageBuilderController::indexAction</controller>
+    <cacheLifetime>604800</cacheLifetime>
+
+    <meta>
+        <title>itech_world.grapesjs.builder</title>
+    </meta>
+
+    <properties>
+        <property name="title" type="text_line" mandatory="true">
+            <meta>
+                <title>itech_world.grapesjs.title</title>
+            </meta>
+
+            <params>
+                <param name="headline" value="true"/>
+            </params>
+
+            <tag name="sulu.rlp.part"/>
+        </property>
+
+        <property name="url" type="resource_locator" mandatory="true">
+            <meta>
+                <title>itech_world.grapesjs.permalink</title>
+            </meta>
+
+            <tag name="sulu.rlp"/>
+        </property>
+
+        <property name="show_code" type="checkbox">
+            <params>
+                <param name="type" value="toggler"/>
+                <param name="label">
+                    <meta>
+                        <title>itech_world.grapesjs.show_code</title>
+                    </meta>
+                </param>
+            </params>
+        </property>
+
+        <property name="json_builder_css" type="text_area" visibleCondition="show_code == true">
+            <meta>
+                <title>itech_world.grapesjs.builder_css</title>
+            </meta>
+        </property>
+
+        <property name="json_builder_html" type="text_area" visibleCondition="show_code == true">
+            <meta>
+                <title>itech_world.grapesjs.builder_html</title>
+            </meta>
+        </property>
+    </properties>
+</template>

@@ -1,0 +1,40 @@
+{
+    "grapesjs": {
+        "console_warn": {
+            "format_not_available": "⚠️ Format \"{{format}}\" für Medium {{mediaId}} nicht verfügbar",
+            "save_url_missing": "⚠️ data-save-url fehlt im Container {{containerId}}",
+            "publish_url_missing": "⚠️ data-publish-url fehlt im Container {{containerId}}"
+        },
+        "console_error": {
+            "load_images_assets_from_sulu": "Fehler beim Laden der Sulu-Medien",
+            "load_documents_assets_from_sulu": "Fehler beim Laden der Sulu-Dokumente",
+            "publish_error": "Veröffentlichung fehlgeschlagen",
+            "save_error": "Speichern fehlgeschlagen",
+            "container_not_found": "Container #{{containerId}} nicht gefunden."
+        },
+        "errors": {
+            "server_error": "Serverfehler"
+        },
+        "buttons": {
+            "save": "Speichern",
+            "publish": "Veröffentlichen",
+            "choose_document": "Dokument auswählen"
+        },
+        "blocks": {
+            "document": "Dokument"
+        },
+        "document": {
+            "download": "Dokument herunterladen",
+            "url": "Dokument-URL",
+            "select_modal_title": "Dokument auswählen"
+        },
+        "messages": {
+            "save_success": "Seite erfolgreich gespeichert",
+            "publish_success": "Seite erfolgreich veröffentlicht"
+        },
+        "traits": {
+            "text": "Text",
+            "link": "Link (href)"
+        }
+    }
+}

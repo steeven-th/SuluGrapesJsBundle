@@ -1,0 +1,27 @@
+# EditorConfig is awesome: https://EditorConfig.org
+root = true
+
+# Global settings for all files
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Match PHP files (PSR-2)
+[{*.php,*.xml,*.md}]
+indent_size = 4
+
+# Match YAML files
+[{*.yml,*.yaml,*.json}]
+indent_size = 2
+
+# Match HTML files
+[{*.html,*.twig,*.js}]
+indent_style = tab
+
+# Match Twig files
+[*.twig]
+trim_trailing_whitespace = false

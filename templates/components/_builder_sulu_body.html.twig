@@ -1,0 +1,18 @@
+<div id="sulu-page-builder"
+    data-json-builder-html='{{ json_builder_html|e('html_attr') }}'
+    data-json-builder-css='{{ json_builder_css|e('html_attr') }}' data-locale='{{ locale|e('html_attr') }}'
+    data-images-formats='{{ {
+    "1920x": "1920x",
+    "sulu-400x400": "sulu-400x400"
+    }|json_encode|e('html_attr') }}'
+    data-save-url='{{ path("admin_page_builder_save", { webspace: webspace, locale: locale, id: id }) }}'
+    data-publish-url='{{ path("admin_page_builder_publish", { webspace: webspace, locale: locale, id: id }) }}'
+    data-translations='{{ translations|e('html_attr') }}'
+    data-frontend-css-path='{{ frontend_css_path|e('html_attr') }}'
+    data-frontend-js-path='{{ frontend_js_path|e('html_attr') }}'
+    >
+    {% if previewContentReplacer is defined %}
+        {{ previewContentReplacer|raw }}
+        {{ previewContentReplacer|raw }}
+    {% endif %}
+</div>

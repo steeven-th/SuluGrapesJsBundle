@@ -1,0 +1,13 @@
+<div class="sulu-navbar">
+	<span>GrapesJS Builder</span>
+	<div class="sulu-navbar-btn-group">
+		<button id="save" disabled>
+			<i class="fa fa-save"></i>
+			{{ 'grapesjs.buttons.save'|trans({}, 'grapesjs') }}
+		</button>
+		<button id="publish" {% if not is_modified %} disabled {% endif %}>
+			<i class="fa fa-save"></i>
+			{{ 'grapesjs.buttons.publish'|trans({}, 'grapesjs') }}
+		</button>
+	</div>
+</div>

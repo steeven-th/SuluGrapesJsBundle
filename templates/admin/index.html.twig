@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+	<head>
+		<meta charset="UTF-8">
+		<title>Page Builder</title>
+		{% include "@ItechWorldSuluGrapesJs/components/_builder_css.html.twig" %}
+	</head>
+	<body>
+		{% include "@ItechWorldSuluGrapesJs/components/_builder_sulu_navbar.html.twig" %}
+		{% include "@ItechWorldSuluGrapesJs/components/_builder_sulu_body.html.twig" %}
+		{% include "@ItechWorldSuluGrapesJs/components/_builder_js.html.twig" with {
+            json_builder_html: json_builder_html,
+            json_builder_css: json_builder_css,
+            locale: locale,
+            webspace: webspace,
+            id: id,
+            translations: translations,
+            frontend_css_path: frontend_css_path,
+            frontend_js_path: frontend_js_path,
+        } %}
+	</body>
+</html>

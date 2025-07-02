@@ -1,0 +1,9 @@
+/*!
+ * Backbone.Undo.js v0.2
+ * 
+ * Copyright (c)2013 Oliver Sartun
+ * Released under the MIT License
+ *
+ * Documentation and full license available at
+ * https://github.com/osartun/Backbone.Undo.js
+ */

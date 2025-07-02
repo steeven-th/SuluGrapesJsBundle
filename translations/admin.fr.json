@@ -1,0 +1,14 @@
+{
+	"itech_world": {
+        "grapesjs": {
+            "grapesjs": "GrapesJS",
+            "builder": "Builder",
+            "title": "Titre",
+            "permalink": "Permalien",
+            "open_builder": "Ouvrir le builder",
+            "builder_css": "CSS",
+            "builder_html": "HTML",
+            "show_code": "Afficher le code"
+        }
+    }
+}

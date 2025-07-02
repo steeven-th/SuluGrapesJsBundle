@@ -1,0 +1,38 @@
+{
+  "name": "itechworld-sulu-grapesjs-bundle",
+  "version": "0.1.0",
+  "description": "GrapesJS page builder for Sulu",
+  "private": true,
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "build:project": "BUILD_TARGET=project webpack --config webpack.config.js",
+    "watch": "WEBPACK_WATCH=true webpack --watch --config webpack.config.js",
+    "watch:project": "BUILD_TARGET=project WEBPACK_WATCH=true webpack --watch --config webpack.config.js"
+  },
+  "dependencies": {
+    "grapesjs": "^0.22.8",
+    "grapesjs-blocks-basic": "^1.0.2",
+    "grapesjs-component-countdown": "^1.0.2",
+    "grapesjs-custom-code": "^1.0.2",
+    "grapesjs-object-fit": "^0.3.2",
+    "grapesjs-preset-webpage": "^1.0.3",
+    "grapesjs-rte-toolbar-extensions": "^1.0.8",
+    "grapesjs-style-bg": "^2.0.2",
+    "grapesjs-style-filter": "^1.0.2",
+    "grapesjs-tooltip": "^0.1.8",
+    "grapesjs-tui-image-editor": "^1.0.2",
+    "grapesjs-typed": "^2.0.1",
+    "grapick": "^0.1.13"
+  },
+  "devDependencies": {
+    "conventional-changelog-angular": "^8.0.0",
+    "conventional-changelog-cli": "^5.0.0",
+    "css-loader": "^6.8.1",
+    "mini-css-extract-plugin": "^2.7.6",
+    "sass": "^1.89.2",
+    "sass-loader": "^16.0.5",
+    "webpack": "^5.93.0",
+    "webpack-build-notifier": "^3.1.0",
+    "webpack-cli": "^5.1.4"
+  }
+}

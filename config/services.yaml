@@ -1,0 +1,25 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+    # ADMIN
+    itech_world.sulu_grapesjs.builder_admin:
+        class: ItechWorld\SuluGrapesJsBundle\Admin\BuilderAdmin
+        arguments:
+            - '@sulu_admin.view_builder_factory'
+        tags:
+            - { name: 'sulu.admin' }
+            - { name: 'sulu.context', context: 'admin' }
+    
+    ItechWorld\SuluGrapesJsBundle\Controller\Admin\:
+        resource: '../src/Controller/Admin'
+    
+    ItechWorld\SuluGrapesJsBundle\Controller\Website\PageBuilderController:
+        autowire: true
+        autoconfigure: true
+        public: true
+
+    Sulu\Component\DocumentManager\DocumentManager: '@sulu_document_manager.document_manager'
+    Symfony\Component\Translation\TranslatorBagInterface: '@translator'
+    Sulu\Bundle\WebsiteBundle\Controller\WebsiteController:
+        alias: ItechWorld\SuluGrapesJsBundle\Controller\Admin\WebsitePreviewController
