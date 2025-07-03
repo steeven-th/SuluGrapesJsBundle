@@ -1,11 +1,12 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace ItechWorld\SuluGrapesJsBundle\Controller\Admin;
 
 use Sulu\Component\DocumentManager\DocumentManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Sulu\Component\Content\Document\Behavior\WorkflowStageBehavior;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +24,7 @@ class PageBuilderController extends AbstractController
         TranslatorBagInterface $translator
     ): Response {
         $page = $documentManager->find($id, $locale);
+
         $jsonBuilderHtml = null;
         $jsonBuilderCss = null;
         if ($page && $structure = $page->getStructure()) {
@@ -45,14 +47,12 @@ class PageBuilderController extends AbstractController
             }
         }
 
+        $publishState = $page instanceof WorkflowStageBehavior
+        ? $page->getWorkflowStage()
+        : null;
+
         $changed = $page->getChanged();
         $lastModified = $page->getLastModified();
-
-        if ($lastModified?->format('Y-m-d H:i:s') < $changed?->format('Y-m-d H:i:s')) {
-            $isModified = true;
-        } else {
-            $isModified = false;
-        }
 
         $flat = $translator->getCatalogue($locale)->all('grapesjs');
 
@@ -61,6 +61,8 @@ class PageBuilderController extends AbstractController
         $cssPath = $this->getParameter('itech_world_sulu_grapesjs.frontend_css_path');
         $jsPath = $this->getParameter('itech_world_sulu_grapesjs.frontend_js_path');
 
+        dump($publishState);
+
         return $this->render('@ItechWorldSuluGrapesJs/admin/index.html.twig', [
             'webspace' => $webspace,
             'locale' => $locale,
@@ -68,7 +70,7 @@ class PageBuilderController extends AbstractController
             'page' => $page,
             'json_builder_html' => $jsonBuilderHtml,
             'json_builder_css' => $jsonBuilderCss,
-            'is_modified' => $isModified,
+            'publish_state' => $publishState == 2 ? true : false,
             'translations' => json_encode($nested),
             'frontend_css_path' => $cssPath,
             'frontend_js_path' => $jsPath,
@@ -88,7 +90,7 @@ class PageBuilderController extends AbstractController
         if (!$data || !isset($data['html']) || !isset($data['css'])) {
             return new JsonResponse(['error' => 'Données invalides'], 400);
         }
-    
+
         $page = $documentManager->find(
             $id,
             $locale,
@@ -136,29 +138,6 @@ class PageBuilderController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
-    #[Route('/admin/page-builder/{webspace}/{locale}/{id}/datas', name: 'admin_page_builder_datas', methods: ['GET'])]
-    public function datas(
-        string $webspace,
-        string $locale,
-        string $id,
-        DocumentManager $documentManager
-    ): JsonResponse {
-        $page = $documentManager->find(
-            $id,
-            $locale,
-            [
-                'load_ghost_content' => true,
-                'load_shadow_content' => true,
-            ]
-        );
-        if (!$page || !$page->getStructure()) {
-            return new JsonResponse(['error' => 'Page introuvable'], 404);
-        }
-
-        dump('changed', $page->getChanged());
-        dd('lastModified', $page->getLastModified());
-    }
-
     private static function unflattenArray(array $flat): array
     {
         $flatWithoutPrefix = [];
@@ -168,7 +147,7 @@ class PageBuilderController extends AbstractController
                 $flatWithoutPrefix[$flatKey] = $value;
             }
         }
-        
+
         $nested = [];
 
         foreach ($flatWithoutPrefix as $flatKey => $value) {
