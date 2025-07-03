@@ -6,12 +6,15 @@ namespace ItechWorld\SuluGrapesJsBundle\Controller\Admin;
 
 use Sulu\Bundle\PreviewBundle\Preview\Preview;
 use Sulu\Bundle\WebsiteBundle\Controller\WebsiteController as WebsiteControllerBase;
+use Sulu\Component\Content\Document\Behavior\WorkflowStageBehavior;
+use Sulu\Component\DocumentManager\DocumentManager;
 use Symfony\Component\Translation\TranslatorBagInterface;
 
 class WebsitePreviewController extends WebsiteControllerBase
 {
 
     public function __construct(
+        private DocumentManager $documentManager,
         private TranslatorBagInterface $translator,
     ) {}
 
@@ -20,15 +23,13 @@ class WebsitePreviewController extends WebsiteControllerBase
         $parameters['previewParentTemplate'] = $view;
         $parameters['previewContentReplacer'] = Preview::CONTENT_REPLACER;
 
-        $lastModified = $parameters['lastModified'];
-        $changed = $parameters['changed'];
+        $page = $this->documentManager->find($parameters['id'], $parameters['request']['defaultLocale']);
 
-        if ($lastModified?->format('Y-m-d H:i:s') < $changed?->format('Y-m-d H:i:s')) {
-            $parameters['is_modified'] = true;
-        } else {
-            $parameters['is_modified'] = false;
-        }
+        $publishState = $page instanceof WorkflowStageBehavior
+        ? $page->getWorkflowStage()
+        : null;
         
+        $parameters['publish_state'] = $publishState;
 
         $flat = $this->translator->getCatalogue($parameters['request']['defaultLocale'])->all('grapesjs');
 

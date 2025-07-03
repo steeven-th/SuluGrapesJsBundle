@@ -205,7 +205,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const jsonBuilderHtml = root.getAttribute('data-json-builder-html');
     const jsonBuilderCss = root.getAttribute('data-json-builder-css');
     const locale = root.getAttribute('data-locale');
-    const youtubeApiKey = root.getAttribute('data-youtube-api-key');
     const imagesFormats = root.getAttribute('data-images-formats');
 
     const imagesAssets = await loadImagesAssetsFromSulu(locale, JSON.parse(imagesFormats));
@@ -441,7 +440,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     adjust();
     window.addEventListener('resize', adjust);
 
-    editor.on('component:update', () => updateSaveIconState(true));
+    // Au composant update, vérifier que le html à réellement changé
+    editor.on('component:update', () => {
+        if (editor.getHtml() !== jsonBuilderHtml || editor.getCss() !== jsonBuilderCss) {
+            updateSaveIconState(true);
+        }
+    });
+
+
+
     editor.on('style:update', () => updateSaveIconState(true));
     editor.on('asset:update', () => updateSaveIconState(true));
 });
