@@ -1,3 +1,12 @@
+## [0.1.8](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.7...0.1.8) (2025-07-03)
+
+
+### Bug Fixes
+
+* replace isModified by native publishState of Sulu ([16daac8](https://github.com/steeven-th/SuluGrapesJsBundle/commit/16daac81ee37a3f390126a0f4f4ceea392b8372f))
+
+
+
 ## [0.1.7](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.6-b...0.1.7) (2025-07-02)
 
 
