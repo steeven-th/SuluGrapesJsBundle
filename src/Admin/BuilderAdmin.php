@@ -11,8 +11,8 @@ use Sulu\Bundle\AdminBundle\Admin\View\ToolbarAction;
 
 class BuilderAdmin extends Admin
 {
-    public const ORIGINAL_VIEW = 'sulu_page.page_edit_form.content';
-    public const CUSTOM_VIEW = 'sulu_page.page_edit_form.content';
+    public const ORIGINAL_VIEW = 'sulu_page.page_edit_form';
+    public const CUSTOM_VIEW = 'sulu_page.page_edit_form';
 
     public function __construct(
         private ViewBuilderFactoryInterface $viewBuilderFactory,
@@ -27,18 +27,21 @@ class BuilderAdmin extends Admin
      */
     public function configureViews(ViewCollection $viewCollection): void
     {
-        $existingView = $viewCollection->get(self::ORIGINAL_VIEW);
-        $existingToolbarActions = $existingView->getView()->getOption('toolbarActions');
+        try {
+            $existingView = $viewCollection->get(self::ORIGINAL_VIEW);
+            $existingToolbarActions = $existingView->getView()->getOption('toolbarActions');
 
-        $existingToolbarActions[] = new ToolbarAction(
-            'itech_world.grapesjs.open_builder',
-            [
-                'enableStandaloneBuilder' => $this->enableStandaloneBuilder,
-            ]
-        );
+            $existingToolbarActions[] = new ToolbarAction(
+                'itech_world.grapesjs.open_builder',
+                [
+                    'enableStandaloneBuilder' => $this->enableStandaloneBuilder,
+                ]
+            );
 
-        $existingView->setOption('toolbarActions', $existingToolbarActions);
-
-        $viewCollection->add($existingView);
+            $existingView->setOption('toolbarActions', $existingToolbarActions);
+            $viewCollection->add($existingView);
+        } catch (\Exception) {
+            // View not available - user may not have page edit permissions
+        }
     }
 }

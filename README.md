@@ -165,9 +165,7 @@ To enable the GrapeJS editor in preview, create a `templates/bundles/SuluWebsite
             json_builder_css: content.json_builder_css,
         } %}
     {% else %}
-        {{ previewContentReplacer|raw }}
         {{ parent() }}
-        {{ previewContentReplacer|raw }}
     {% endif %}
 {% endblock %}
 
