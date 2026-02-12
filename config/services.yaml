@@ -8,6 +8,7 @@ services:
         class: ItechWorld\SuluGrapesJsBundle\Admin\BuilderAdmin
         arguments:
             - '@sulu_admin.view_builder_factory'
+            - '%itech_world_sulu_grapesjs.enable_standalone_builder%'
         tags:
             - { name: 'sulu.admin' }
             - { name: 'sulu.context', context: 'admin' }
@@ -16,5 +17,13 @@ services:
         autowire: true
         autoconfigure: true
         public: true
+
+    # WEBSITE - Controller for builder page rendering (preview + frontend)
+    ItechWorld\SuluGrapesJsBundle\Controller\Website\BuilderContentController:
+        autowire: true
+        autoconfigure: true
+        public: true
+        tags:
+            - { name: 'container.service_subscriber' }
 
     Symfony\Component\Translation\TranslatorBagInterface: '@translator'

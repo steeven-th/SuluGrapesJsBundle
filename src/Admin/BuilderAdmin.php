@@ -16,8 +16,15 @@ class BuilderAdmin extends Admin
 
     public function __construct(
         private ViewBuilderFactoryInterface $viewBuilderFactory,
+        private bool $enableStandaloneBuilder,
     ) {}
 
+    /**
+     * Always registers the ToolbarAction so the JS is instantiated
+     * (required for the postMessage listener in preview mode).
+     * The enableStandaloneBuilder option only controls the visibility
+     * of the "Open Builder" button on the JS side.
+     */
     public function configureViews(ViewCollection $viewCollection): void
     {
         $existingView = $viewCollection->get(self::ORIGINAL_VIEW);
@@ -26,12 +33,10 @@ class BuilderAdmin extends Admin
         $existingToolbarActions[] = new ToolbarAction(
             'itech_world.grapesjs.open_builder',
             [
-                'icon' => 'su-magic-wand',
-                'type' => 'button',
-                'onClick' => 'openBuilder'
+                'enableStandaloneBuilder' => $this->enableStandaloneBuilder,
             ]
         );
-        
+
         $existingView->setOption('toolbarActions', $existingToolbarActions);
 
         $viewCollection->add($existingView);

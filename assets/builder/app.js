@@ -16,12 +16,79 @@ import fr from 'grapesjs/locale/fr';
 
 const root = document.getElementById('sulu-page-builder');
 const translations = JSON.parse(root.getAttribute('data-translations') || '{}');
-function t(key, defaultValue = '') {
-    return key.split('.').reduce((obj, k) => (obj || {})[k], translations) || defaultValue;
+function t(key, params = {}) {
+    const value = key.split('.').reduce((obj, k) => (obj || {})[k], translations) || '';
+    if (typeof params === 'object' && params !== null) {
+        return value.replace(/\{\{(\w+)\}\}/g, (_, k) => params[k] ?? '');
+    }
+    return value;
 }
 
 const saveButton = document.getElementById('save');
 const publishButton = document.getElementById('publish');
+
+// --- Synchronization with the Sulu admin FormStore (preview mode) ---
+let lastSentHtml = null;
+let lastSentCss = null;
+
+function getPreviewTarget() {
+    return window.parent !== window ? window.parent : window.opener;
+}
+
+// Full sync: sends data AND triggers a preview re-render.
+// Forces commit of inline edits before reading HTML.
+function notifyParentOfChanges(editorInstance) {
+    // Force GrapeJS to commit inline edits ONLY when the RTE is active
+    // (prevents corrupting structural components via sync:content)
+    const rte = editorInstance.RichTextEditor;
+    if (rte && typeof rte.getToolbarEl === 'function' && rte.getToolbarEl()?.style?.display !== 'none') {
+        const selected = editorInstance.getSelected();
+        if (selected) {
+            selected.trigger('sync:content');
+        }
+    }
+
+    // Cancel pending timer to avoid a crossed message after re-render
+    clearTimeout(_pendingTimer);
+
+    const currentHtml = editorInstance.getHtml();
+    const currentCss = editorInstance.getCss();
+
+    lastSentHtml = currentHtml;
+    lastSentCss = currentCss;
+
+    const target = getPreviewTarget();
+    if (target) {
+        target.postMessage({
+            type: 'sulu-grapes-update',
+            html: currentHtml,
+            css: currentCss,
+        }, window.location.origin);
+    }
+}
+
+// Silent sync: sends data to the parent without triggering a re-render.
+// The parent stores the data and marks the FormStore dirty ("unsaved changes" alert).
+let _pendingTimer;
+function sendPendingToParent(editorInstance) {
+    clearTimeout(_pendingTimer);
+    _pendingTimer = setTimeout(() => {
+        // No sync:content here — sendPendingToParent is silent and must not
+        // interfere with inline editing (cursor loss).
+        // Precise commit is done in notifyParentOfChanges (explicit Sync).
+        const currentHtml = editorInstance.getHtml();
+        const currentCss = editorInstance.getCss();
+        const target = getPreviewTarget();
+        if (target) {
+            target.postMessage({
+                type: 'sulu-grapes-pending',
+                html: currentHtml,
+                css: currentCss,
+            }, window.location.origin);
+        }
+    }, 1000);
+}
+
 
 const loadImagesAssetsFromSulu = async (locale, formats) => {
     try {
@@ -98,11 +165,11 @@ async function save(editor, data, saveUrl) {
     if (!saveUrl || !editor) return { id: 1, data, pagesHtml: [] };
 
     const saveButton = document.querySelector('#save');
-    const saveIcon = saveButton.querySelector('i');
+    const saveIcon = saveButton?.querySelector('i');
     const publishButton = document.querySelector('#publish');
 
-    saveIcon.style.color = 'orange';
-    saveButton.disabled = true;
+    if (saveIcon) saveIcon.style.color = 'orange';
+    if (saveButton) saveButton.disabled = true;
 
     const pages = editor.Pages.getAll();
     const pagesHtml = [];
@@ -132,18 +199,20 @@ async function save(editor, data, saveUrl) {
             });
         }
 
-        publishButton.disabled = false;
-        saveButton.disabled = true;
+        if (publishButton) publishButton.disabled = false;
+        if (saveButton) saveButton.disabled = true;
 
-        setTimeout(() => {
-            saveIcon.style.color = '';
-        }, 1000);
+        if (saveIcon) {
+            setTimeout(() => {
+                saveIcon.style.color = '';
+            }, 1000);
+        }
 
         return { id: 1, data, pagesHtml };
     } catch (err) {
-        saveButton.disabled = false;
+        if (saveButton) saveButton.disabled = false;
         console.error(`❌ ${t('console_error.save_error')}`, err);
-        saveIcon.style.color = '';
+        if (saveIcon) saveIcon.style.color = '';
         throw err;
     }
 }
@@ -201,11 +270,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const frontendCssPath = root.getAttribute('data-frontend-css-path');
+    const frontendJsPath = root.getAttribute('data-frontend-js-path');
 
     const jsonBuilderHtml = root.getAttribute('data-json-builder-html');
     const jsonBuilderCss = root.getAttribute('data-json-builder-css');
     const locale = root.getAttribute('data-locale');
     const imagesFormats = root.getAttribute('data-images-formats');
+
+    // Preview mode detection (no save button = preview mode)
+    const isPreviewMode = !saveButton;
+    const previewStorageKey = isPreviewMode && saveUrl
+        ? `gjsPreview-${encodeURIComponent(saveUrl)}`
+        : null;
+
+    // In preview mode, recover the current editing session data
+    // saved in localStorage before the Sulu re-render
+    let effectiveHtml = jsonBuilderHtml;
+    let effectiveCss = jsonBuilderCss;
+
+    if (previewStorageKey) {
+        try {
+            const stored = JSON.parse(localStorage.getItem(previewStorageKey));
+            if (stored && stored.ts && (Date.now() - stored.ts < 300000)) {
+                // Check that base data hasn't changed
+                // (e.g. saved via standalone builder in the meantime)
+                if (stored.baseHtml === jsonBuilderHtml && stored.baseCss === jsonBuilderCss) {
+                    effectiveHtml = stored.html;
+                    effectiveCss = stored.css;
+                } else {
+                    // Backend data changed → stale cache
+                    localStorage.removeItem(previewStorageKey);
+                }
+            }
+        } catch (e) { /* ignore */ }
+    }
 
     const imagesAssets = await loadImagesAssetsFromSulu(locale, JSON.parse(imagesFormats));
     const documentsAssets = await loadDocumentsAssetsFromSulu(locale);
@@ -219,28 +317,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         styles: [],
     };
 
-    if (jsonBuilderHtml) {
+    if (effectiveHtml) {
         projectData.pages = [{
             name: 'Page 1',
-            component: jsonBuilderHtml,
+            component: effectiveHtml,
         }];
     }
 
-    if (jsonBuilderCss && projectData.pages.length) {
+    if (effectiveCss && projectData.pages.length) {
         let component = projectData.pages[0].component || '';
-        const styleTag = `<style>${jsonBuilderCss}</style>`;
+        const styleTag = `<style>${effectiveCss}</style>`;
         component = component.includes('<head>')
             ? component.replace('<head>', `<head>${styleTag}`)
             : styleTag + component;
         projectData.pages[0].component = component;
     }
 
+    // Styles and scripts to inject into the GrapeJS canvas (nested iframe).
+    // In preview: <link> elements from the document (loaded by Sulu) are cloned
+    // into the canvas via the load event (survives internal frame rebuilds).
+    // In standalone: uses paths configured in the YAML.
+    const builderAssetPatterns = ['grapesjs', 'grape-builder', 'itechworldsulugrapesjs'];
+    const isBuilderAsset = (url) => builderAssetPatterns.some(p => url.includes(p));
+
+    let canvasStyles = [];
+    let canvasScripts = [];
+
+    if (!isPreviewMode) {
+        if (frontendCssPath) canvasStyles.push(frontendCssPath);
+        if (frontendJsPath) canvasScripts.push(frontendJsPath);
+    }
+
     const editor = grapesjs.init({
         container: '#sulu-page-builder',
+        // Override default GrapeJS baseCss to remove background-color: #fff
+        // on the body, so that frontend styles can apply normally
+        baseCss: `
+            * { box-sizing: border-box; }
+            html, body, [data-gjs-type=wrapper] { min-height: 100%; }
+            body { margin: 0; height: 100%; }
+            [data-gjs-type=wrapper] { overflow: auto; overflow-x: hidden; }
+            * ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+            * ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
+            * ::-webkit-scrollbar { width: 10px; }
+        `,
         canvas: {
-            styles: [
-                frontendCssPath,
-            ],
+            styles: canvasStyles,
+            scripts: canvasScripts,
         },
         plugins: [
             editor => plugin(editor, {}),
@@ -265,7 +388,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             assets: [...imagesAssets, ...documentsAssets],
         },
         projectData: projectData,
-        storageManager: {
+        // In preview mode (no save button), disable storageManager
+        // to avoid auto-saves interfering with the Sulu FormStore flow
+        storageManager: saveButton ? {
             type: 'local',
             options: {
                 local: {
@@ -276,7 +401,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     },
                 }
             }
-        },
+        } : false,
         i18n: {
             messages: {
                 de,
@@ -417,16 +542,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
     });
 
-    // Handle save button click
-    saveButton.addEventListener('click', () => {
-        const data = editor.getProjectData();
-        save(editor, data, saveUrl);
-        updateSaveIconState(false);
-    });
+    // In preview: clone <link rel="stylesheet"> from the parent document into the
+    // GrapeJS canvas. Executed on each canvas frame (re)load so that styles
+    // survive internal GrapeJS rebuilds.
+    // Only <link> elements are cloned (not inline <style> which may contain
+    // builder or framework styles that would break the canvas).
+    if (isPreviewMode) {
+        const injectPreviewLinks = () => {
+            const canvasDoc = editor.Canvas.getDocument();
+            if (!canvasDoc) return;
 
-    publishButton.addEventListener('click', () => {
-        publish(publishUrl);
-    });
+            document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                if (!link.href || isBuilderAsset(link.href)) return;
+                // Avoid duplicates
+                if (canvasDoc.querySelector(`link[href="${link.href}"]`)) return;
+                const clone = canvasDoc.createElement('link');
+                clone.rel = 'stylesheet';
+                clone.href = link.href;
+                canvasDoc.head.appendChild(clone);
+            });
+        };
+        // 'load' = editor fully initialized, canvas ready
+        editor.on('load', injectPreviewLinks);
+    }
+
+    // Initialize anti-loop reference values
+    // In preview: from the actual editor state (may come from localStorage)
+    // to avoid an immediate postMessage after re-render
+    if (isPreviewMode) {
+        lastSentHtml = editor.getHtml();
+        lastSentCss = editor.getCss();
+    } else {
+        lastSentHtml = jsonBuilderHtml;
+        lastSentCss = jsonBuilderCss;
+    }
+
+    // Handle save button click (button does not exist in preview mode)
+    if (saveButton) {
+        saveButton.addEventListener('click', () => {
+            const data = editor.getProjectData();
+            save(editor, data, saveUrl);
+            updateSaveIconState(false);
+            notifyParentOfChanges(editor);
+        });
+    }
+
+    if (publishButton) {
+        publishButton.addEventListener('click', () => {
+            publish(publishUrl);
+        });
+    }
 
     const builder = document.getElementById('sulu-page-builder');
     const header = document.querySelector('sulu-navbar');
@@ -440,15 +605,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     adjust();
     window.addEventListener('resize', adjust);
 
-    // On component update, check if the HTML has actually changed
+    // localStorage save in preview mode (to survive re-renders)
+    function saveToPreviewStorage() {
+        if (!previewStorageKey) return;
+        try {
+            localStorage.setItem(previewStorageKey, JSON.stringify({
+                html: editor.getHtml(),
+                css: editor.getCss(),
+                baseHtml: jsonBuilderHtml,
+                baseCss: jsonBuilderCss,
+                ts: Date.now(),
+            }));
+        } catch (e) { /* quota exceeded or other - ignore */ }
+    }
+
+    // Flag to ignore events during editor initialization.
+    // GrapeJS fires component:add for each component loaded from HTML,
+    // which would trigger a false dirty state if processed.
+    let editorReady = false;
+    editor.on('load', () => { editorReady = true; });
+
+    // Change detected: update save icon, localStorage and preview sync
+    const onEditorChange = () => {
+        if (!editorReady) return;
+        updateSaveIconState(true);
+        saveToPreviewStorage();
+        if (isPreviewMode) sendPendingToParent(editor);
+    };
+
+    // component:update = property change on an existing component
     editor.on('component:update', () => {
+        if (!editorReady) return;
         if (editor.getHtml() !== jsonBuilderHtml || editor.getCss() !== jsonBuilderCss) {
             updateSaveIconState(true);
         }
+        saveToPreviewStorage();
+        if (isPreviewMode) sendPendingToParent(editor);
     });
 
+    // component:add / component:remove = block added or removed
+    editor.on('component:add', onEditorChange);
+    editor.on('component:remove', onEditorChange);
 
+    editor.on('style:update', onEditorChange);
+    editor.on('asset:update', onEditorChange);
 
-    editor.on('style:update', () => updateSaveIconState(true));
-    editor.on('asset:update', () => updateSaveIconState(true));
+    // In preview mode: sync with the Sulu FormStore only when the user
+    // leaves the editor (blur) or presses Ctrl+S / Cmd+S.
+    // This prevents unwanted preview re-renders during editing.
+    if (isPreviewMode) {
+        // Ctrl+S / Cmd+S: immediate sync with the Sulu FormStore
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                notifyParentOfChanges(editor);
+            }
+        });
+
+        // Sync button in the preview banner
+        const syncButton = document.getElementById('preview-sync');
+        if (syncButton) {
+            syncButton.addEventListener('click', () => {
+                notifyParentOfChanges(editor);
+            });
+        }
+    }
 });

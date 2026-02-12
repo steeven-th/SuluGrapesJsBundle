@@ -35,6 +35,10 @@
         "traits": {
             "text": "Text",
             "link": "Link (href)"
+        },
+        "preview": {
+            "info_banner": "Preview Mode — Sync your changes before saving via Sulu",
+            "sync_button": "Sync"
         }
     }
 }
