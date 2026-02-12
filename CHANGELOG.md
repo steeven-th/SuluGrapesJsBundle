@@ -7,6 +7,15 @@
 
 
 
+# [](https://github.com/steeven-th/SuluGrapesJsBundle/compare/v1.0.0...v) (2026-02-12)
+
+
+### Features
+
+* preview mode sync, standalone builder option, CSS auto-detection ([64b087d](https://github.com/steeven-th/SuluGrapesJsBundle/commit/64b087df98415db6ae73238e9fe5b28cfbbd90fe))
+
+
+
 #  (2026-02-12)
 
 
