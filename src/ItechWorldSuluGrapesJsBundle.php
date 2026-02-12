@@ -18,13 +18,7 @@ class ItechWorldSuluGrapesJsBundle extends AbstractBundle
             ->scalarNode('frontend_css_path')->defaultValue('')->end()
             ->scalarNode('frontend_js_path')->defaultValue('')->end()
             ->booleanNode('enable_standalone_builder')->defaultFalse()->end()
-            ->arrayNode('images_formats')
-                ->useAttributeAsKey('key')
-                ->scalarPrototype()->end()
-                ->defaultValue([
-                    'sulu-400x400' => 'sulu-400x400',
-                ])
-            ->end()
+            ->booleanNode('detached_preview_native_media')->defaultFalse()->end()
         ->end();
     }
 
@@ -56,7 +50,7 @@ class ItechWorldSuluGrapesJsBundle extends AbstractBundle
         $container->parameters()->set('itech_world_sulu_grapesjs.frontend_css_path', $config['frontend_css_path']);
         $container->parameters()->set('itech_world_sulu_grapesjs.frontend_js_path', $config['frontend_js_path']);
         $container->parameters()->set('itech_world_sulu_grapesjs.enable_standalone_builder', $config['enable_standalone_builder']);
-        $container->parameters()->set('itech_world_sulu_grapesjs.images_formats', $config['images_formats']);
+        $container->parameters()->set('itech_world_sulu_grapesjs.detached_preview_native_media', $config['detached_preview_native_media']);
         $container->import('../config/services.yaml');
     }
 }

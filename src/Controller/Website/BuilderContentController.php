@@ -21,7 +21,7 @@ use Symfony\Component\Translation\TranslatorBagInterface;
  * - publish_state : publication state of the page
  * - translations : GrapeJS translations as nested JSON
  * - frontend_css_path / frontend_js_path : frontend asset paths
- * - images_formats : configured image formats
+ * - detached_preview_native_media : use Sulu overlay in detached preview
  * - template : template key
  * - webspace : webspace key
  * - locale : page locale
@@ -79,7 +79,7 @@ class BuilderContentController extends ContentController
         $parameters['translations'] = json_encode($nested);
         $parameters['frontend_css_path'] = $this->getParameter('itech_world_sulu_grapesjs.frontend_css_path');
         $parameters['frontend_js_path'] = $this->getParameter('itech_world_sulu_grapesjs.frontend_js_path');
-        $parameters['images_formats'] = $this->getParameter('itech_world_sulu_grapesjs.images_formats');
+        $parameters['detached_preview_native_media'] = $this->getParameter('itech_world_sulu_grapesjs.detached_preview_native_media');
         $parameters['template'] = $templateKey;
         $parameters['webspace'] = $webspaceKey;
         $parameters['locale'] = $locale;

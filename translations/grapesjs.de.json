@@ -34,11 +34,18 @@
         },
         "traits": {
             "text": "Text",
-            "link": "Link (href)"
+            "link": "Link (href)",
+            "format": "Format",
+            "format_original": "Original"
         },
         "preview": {
             "info_banner": "Vorschau-Modus — Synchronisieren Sie Ihre Änderungen, bevor Sie über Sulu speichern",
             "sync_button": "Synchronisieren"
+        },
+        "asset_manager": {
+            "search": "Medien suchen...",
+            "images": "Bilder",
+            "documents": "Dokumente"
         }
     }
 }
