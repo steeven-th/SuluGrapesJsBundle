@@ -26,7 +26,11 @@ SuluGrapesJsBundle extends the Sulu CMS to offer GrapesJS editor integration in 
 * GrapesJS integration in Sulu Admin for content editing **(only BODY content)**
 * Builder integrated in Sulu Preview with live synchronization (changes are synced to the Sulu form, enabling save/publish via the Sulu toolbar)
 * Optional standalone builder mode (opens the editor in a separate tab)
-* Asset Manager in Builder **(ℹ️ Currently, you have access to all images and documents from Sulu. Soon, we will add video from Sulu and Youtube)**
+* Asset Manager in Builder:
+  * **Preview mode**: Uses the native Sulu media overlay (browse collections, search, pagination built-in) for both images and documents
+  * **Standalone mode**: Enhanced GrapeJS Asset Manager with pagination (20 items/page), search, and one entry per media
+  * `data-media-id` attribute is automatically set on inserted images and document links
+* **Image Format Selector**: When an image from Sulu is selected, a "Format" dropdown appears in the component settings panel (below "Alt text"), listing all Sulu image formats with their dimensions. Allows switching between the original image and any configured thumbnail format directly from the editor
 
 ## 🇬🇧 Available translations
 
@@ -73,15 +77,21 @@ php bin/console assets:install --symlink
 
 ### Configuration
 
-Create a `config/packages/itech_world_sulu_grapejs.yaml` file with the following content:
-```yaml
-itech_world_sulu_grapes_js:
-    images_formats: # Images formats to use in the editor
-        1920x: '1920x'
-        sulu-400x400: 'sulu-400x400'
-```
+The bundle requires no specific configuration for basic usage. Image formats are fetched dynamically from the Sulu API.
 
 > **Note:** In preview mode, the GrapeJS canvas automatically inherits all stylesheets and scripts loaded by Sulu's preview system. No additional configuration is needed — your frontend styles are applied to the canvas content out of the box.
+
+> **Breaking change:** The `images_formats` configuration option has been removed. Image formats are now retrieved dynamically from the Sulu API (`/admin/api/formats.json`). If your `config/packages/itech_world_sulu_grapejs.yaml` still contains `images_formats`, remove it to avoid a Symfony configuration error.
+
+#### Detached preview media behavior
+
+When the Sulu preview is detached (opened in a separate window), the native Sulu media overlay opens in the admin window — which may not be visible. By default, the custom GrapeJS Asset Manager (with pagination and search) is used instead.
+
+To force the native Sulu overlay even in detached mode:
+```yaml
+itech_world_sulu_grapes_js:
+    detached_preview_native_media: true  # default: false
+```
 
 #### ***BACK***
 
@@ -132,7 +142,9 @@ The recommended way to use the GrapeJS editor is directly inside the Sulu Previe
 
 ![Admin page builder](./doc/images/admin_page_builder.png)
 
-The `BuilderContentController` automatically injects all required variables (`publish_state`, `translations`, `frontend_css_path`, `frontend_js_path`, `images_formats`, `template`, `webspace`, `locale`, `id`) into the template context for both frontend rendering and preview mode.
+The `BuilderContentController` automatically injects all required variables (`publish_state`, `translations`, `frontend_css_path`, `frontend_js_path`, `template`, `webspace`, `locale`, `id`) into the template context for both frontend rendering and preview mode.
+
+In preview mode, when the user opens the Asset Manager (double-click on an image or click "Choose a document"), the native Sulu media selection overlay opens instead of the basic GrapeJS panel. This gives access to all media collections, search, and pagination natively.
 
 To enable the GrapeJS editor in preview, create a `templates/bundles/SuluWebsiteBundle/Preview/preview.html.twig` file with the following content:
 ```twig
@@ -167,7 +179,7 @@ To enable the GrapeJS editor in preview, create a `templates/bundles/SuluWebsite
 {% endblock %}
 ```
 
-> **Note:** The variables `locale`, `webspace`, `id`, `translations`, `frontend_css_path`, `frontend_js_path`, `images_formats`, and `previewContentReplacer` are automatically available in the template context thanks to `BuilderContentController`. You only need to explicitly pass `json_builder_html` and `json_builder_css` from the `content` object.
+> **Note:** The variables `locale`, `webspace`, `id`, `translations`, `frontend_css_path`, `frontend_js_path`, and `previewContentReplacer` are automatically available in the template context thanks to `BuilderContentController`. You only need to explicitly pass `json_builder_html` and `json_builder_css` from the `content` object.
 
 ## 🔧 Standalone Builder (Optional)
 
@@ -195,6 +207,20 @@ In standalone mode, the builder has its own Save and Publish buttons that commun
 ![Builder page](./doc/images/builder_page.png)
 
 ![Admin page](./doc/images/admin_page.png)
+
+## 🖼️ Image Format Selector
+
+When an image inserted via the Sulu media library is selected in the editor, a **Format** dropdown appears in the component settings panel (traits), right below the "Alt text" field. It lists all image formats configured in your `image-formats.xml`, along with their scale dimensions.
+
+| Scenario | Behavior |
+|----------|----------|
+| Image from Sulu (just selected) | Dropdown populated immediately with "Original" + all Sulu formats |
+| Image from Sulu (loaded from saved HTML) | Thumbnails fetched on selection via API, dropdown populates after a brief loading state |
+| Image without `data-media-id` (manual URL) | Format dropdown is hidden |
+| Format changed in dropdown | `src` attribute is updated, canvas reflects the new resolution |
+| "Original" selected | Reverts to the full-resolution URL |
+
+![Image Format Selector](./doc/images/images_formats.png)
 
 ## 🐛 Bug and Idea
 
