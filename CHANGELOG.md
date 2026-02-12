@@ -1,3 +1,12 @@
+# [](https://github.com/steeven-th/SuluGrapesJsBundle/compare/v1.1.0...v) (2026-02-12)
+
+
+### Bug Fixes
+
+* handle missing page edit permissions in BuilderAdmin configureViews ([4588019](https://github.com/steeven-th/SuluGrapesJsBundle/commit/458801902033ed772852231e51e33ff0651bb264))
+
+
+
 # [](https://github.com/steeven-th/SuluGrapesJsBundle/compare/v1.0.1...v) (2026-02-12)
 
 
