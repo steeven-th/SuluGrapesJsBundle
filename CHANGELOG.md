@@ -1,3 +1,12 @@
+# [](https://github.com/steeven-th/SuluGrapesJsBundle/compare/v1.0.1...v) (2026-02-12)
+
+
+### Features
+
+* add image format selector, asset manager pagination and search ([c6fb4aa](https://github.com/steeven-th/SuluGrapesJsBundle/commit/c6fb4aaf9faacb9a870cc442a64222ca82a142e0))
+
+
+
 # [](https://github.com/steeven-th/SuluGrapesJsBundle/compare/v1.0.0...v) (2026-02-12)
 
 
