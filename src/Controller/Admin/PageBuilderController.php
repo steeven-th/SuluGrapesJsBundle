@@ -4,140 +4,218 @@ declare(strict_types=1);
 
 namespace ItechWorld\SuluGrapesJsBundle\Controller\Admin;
 
-use Sulu\Component\DocumentManager\DocumentManager;
+use Doctrine\ORM\EntityManagerInterface;
+use Sulu\Content\Application\ContentManager\ContentManagerInterface;
+use Sulu\Content\Domain\Model\DimensionContentInterface;
+use Sulu\Content\Domain\Model\TemplateInterface;
+use Sulu\Content\Domain\Model\WorkflowInterface;
+use Sulu\Page\Domain\Repository\PageRepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Sulu\Component\Content\Document\Behavior\WorkflowStageBehavior;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Translation\TranslatorBagInterface;
 
+/**
+ * Admin controller for the GrapeJS Page Builder editor.
+ *
+ * Handles loading, saving and publishing content
+ * for pages using the "builder" template via Sulu 3.0 APIs.
+ */
 class PageBuilderController extends AbstractController
 {
+    public function __construct(
+        private PageRepositoryInterface $pageRepository,
+        private ContentManagerInterface $contentManager,
+        private EntityManagerInterface $entityManager,
+        private TranslatorBagInterface $translator,
+    ) {}
+
+    /**
+     * Display the GrapeJS editor for a given page.
+     *
+     * @param string $webspace Webspace key
+     * @param string $locale   Page locale
+     * @param string $id       Page UUID
+     *
+     * @return Response
+     */
     #[Route('/admin/page-builder/{webspace}/{locale}/{id}', name: 'admin_page_builder')]
     public function index(
         string $webspace,
         string $locale,
         string $id,
-        DocumentManager $documentManager,
-        TranslatorBagInterface $translator
     ): Response {
-        $page = $documentManager->find($id, $locale);
+        $dimensionAttributes = [
+            'locale' => $locale,
+            'stage' => DimensionContentInterface::STAGE_DRAFT,
+        ];
 
-        $jsonBuilderHtml = null;
-        $jsonBuilderCss = null;
-        if ($page && $structure = $page->getStructure()) {
-            if (!$structure->hasProperty('json_builder_html') || !$structure->hasProperty('json_builder_css')) {
-                return $this->redirectToRoute('sulu_page.get_page', [
-                    'webspace' => $webspace,
-                    'locale' => $locale,
-                    'id' => $id,
-                ]);
-            }
+        $page = $this->pageRepository->findOneBy(
+            array_merge(['uuid' => $id], $dimensionAttributes),
+            [PageRepositoryInterface::GROUP_SELECT_PAGE_ADMIN => true],
+        );
 
-            $propertyHtml = $structure->getProperty('json_builder_html');
-            $propertyCss = $structure->getProperty('json_builder_css');
-
-            if ($propertyHtml) {
-                $jsonBuilderHtml = $propertyHtml->getValue();
-            }
-            if ($propertyCss) {
-                $jsonBuilderCss = $propertyCss->getValue();
-            }
+        if (!$page) {
+            throw $this->createNotFoundException('Page not found');
         }
 
-        $publishState = $page instanceof WorkflowStageBehavior
-        ? $page->getWorkflowStage()
-        : null;
+        $dimensionContent = $this->contentManager->resolve($page, $dimensionAttributes);
 
-        $changed = $page->getChanged();
-        $lastModified = $page->getLastModified();
+        // Check that the template supports GrapeJS properties
+        $templateData = [];
+        if ($dimensionContent instanceof TemplateInterface) {
+            $templateData = $dimensionContent->getTemplateData();
+        }
 
-        $flat = $translator->getCatalogue($locale)->all('grapesjs');
+        if (!array_key_exists('json_builder_html', $templateData) || !array_key_exists('json_builder_css', $templateData)) {
+            return $this->redirectToRoute('sulu_page.get_page', [
+                'webspace' => $webspace,
+                'locale' => $locale,
+                'id' => $id,
+            ]);
+        }
 
+        $jsonBuilderHtml = $templateData['json_builder_html'] ?? null;
+        $jsonBuilderCss = $templateData['json_builder_css'] ?? null;
+
+        // Determine publish state
+        $isPublished = false;
+        if ($dimensionContent instanceof WorkflowInterface) {
+            $isPublished = $dimensionContent->getWorkflowPlace() === WorkflowInterface::WORKFLOW_PLACE_PUBLISHED;
+        }
+
+        // Translations for the GrapeJS editor
+        $flat = $this->translator->getCatalogue($locale)->all('grapesjs');
         $nested = self::unflattenArray($flat);
 
         $cssPath = $this->getParameter('itech_world_sulu_grapesjs.frontend_css_path');
         $jsPath = $this->getParameter('itech_world_sulu_grapesjs.frontend_js_path');
 
-        dump($publishState);
-
         return $this->render('@ItechWorldSuluGrapesJs/admin/index.html.twig', [
             'webspace' => $webspace,
             'locale' => $locale,
             'id' => $id,
-            'page' => $page,
             'json_builder_html' => $jsonBuilderHtml,
             'json_builder_css' => $jsonBuilderCss,
-            'publish_state' => $publishState == 2 ? true : false,
+            'publish_state' => $isPublished,
             'translations' => json_encode($nested),
             'frontend_css_path' => $cssPath,
             'frontend_js_path' => $jsPath,
         ]);
     }
 
+    /**
+     * Save HTML/CSS content generated by GrapeJS.
+     *
+     * @param string  $webspace Webspace key
+     * @param string  $locale   Page locale
+     * @param string  $id       Page UUID
+     * @param Request $request  Request containing HTML and CSS as JSON
+     *
+     * @return JsonResponse
+     */
     #[Route('/admin/page-builder/{webspace}/{locale}/{id}/save', name: 'admin_page_builder_save', methods: ['POST'])]
     public function save(
         string $webspace,
         string $locale,
         string $id,
         Request $request,
-        DocumentManager $documentManager
     ): JsonResponse {
         $data = json_decode($request->getContent(), true);
 
         if (!$data || !isset($data['html']) || !isset($data['css'])) {
-            return new JsonResponse(['error' => 'Données invalides'], 400);
+            return new JsonResponse(['error' => 'Invalid data'], Response::HTTP_BAD_REQUEST);
         }
 
-        $page = $documentManager->find(
-            $id,
-            $locale,
-            [
-                'load_ghost_content' => false,
-                'load_shadow_content' => false,
-            ]
+        $dimensionAttributes = [
+            'locale' => $locale,
+            'stage' => DimensionContentInterface::STAGE_DRAFT,
+        ];
+
+        $page = $this->pageRepository->findOneBy(
+            array_merge(['uuid' => $id], $dimensionAttributes),
+            [PageRepositoryInterface::GROUP_SELECT_PAGE_ADMIN => true],
         );
-        if (!$page || !$page->getStructure()) {
-            return new JsonResponse(['error' => 'Page introuvable'], 404);
+
+        if (!$page) {
+            return new JsonResponse(['error' => 'Page not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $page->getStructure()->getProperty('json_builder_html')->setValue($data['html']);
-        $page->getStructure()->getProperty('json_builder_css')->setValue($data['css']);
-        $documentManager->persist($page, $locale);
-        $documentManager->flush();
+        // Resolve current content to retrieve all existing data
+        $dimensionContent = $this->contentManager->resolve($page, $dimensionAttributes);
+        $existingData = [];
+        $templateKey = null;
+        if ($dimensionContent instanceof TemplateInterface) {
+            $existingData = $dimensionContent->getTemplateData();
+            $templateKey = $dimensionContent->getTemplateKey();
+        }
+
+        // Update only GrapeJS properties
+        // The 'template' key is required for the TemplateDataMapper
+        // to resolve the form schema during persistence
+        $persistData = array_merge($existingData, [
+            'template' => $templateKey,
+            'json_builder_html' => $data['html'],
+            'json_builder_css' => $data['css'],
+        ]);
+
+        $this->contentManager->persist($page, $persistData, $dimensionAttributes);
+        $this->entityManager->flush();
 
         return new JsonResponse(['success' => true]);
     }
 
+    /**
+     * Publish the page by applying the "publish" workflow transition.
+     *
+     * @param string $webspace Webspace key
+     * @param string $locale   Page locale
+     * @param string $id       Page UUID
+     *
+     * @return JsonResponse
+     */
     #[Route('/admin/page-builder/{webspace}/{locale}/{id}/publish', name: 'admin_page_builder_publish', methods: ['GET'])]
     public function publish(
         string $webspace,
         string $locale,
         string $id,
-        DocumentManager $documentManager
     ): JsonResponse {
-        $page = $documentManager->find(
-            $id,
-            $locale,
-            [
-                'load_ghost_content' => true,
-                'load_shadow_content' => true,
-            ]
+        $dimensionAttributes = [
+            'locale' => $locale,
+            'stage' => DimensionContentInterface::STAGE_DRAFT,
+        ];
+
+        $page = $this->pageRepository->findOneBy(
+            array_merge(['uuid' => $id], $dimensionAttributes),
+            [PageRepositoryInterface::GROUP_SELECT_PAGE_ADMIN => true],
         );
-        if (!$page || !$page->getStructure()) {
-            return new JsonResponse(['error' => 'Page introuvable'], 404);
+
+        if (!$page) {
+            return new JsonResponse(['error' => 'Page not found'], Response::HTTP_NOT_FOUND);
         }
 
-        $page->setLastModified(new \DateTime());
-        $documentManager->persist($page, $locale);
-        $documentManager->publish($page, $locale);
-        $documentManager->flush();
+        $this->contentManager->applyTransition(
+            $page,
+            $dimensionAttributes,
+            WorkflowInterface::WORKFLOW_TRANSITION_PUBLISH,
+        );
+
+        $this->entityManager->flush();
 
         return new JsonResponse(['success' => true]);
     }
 
+    /**
+     * Convert a flat dot-notated key array into a nested array.
+     *
+     * Example: ['a.b.c' => 'val'] → ['a' => ['b' => ['c' => 'val']]]
+     *
+     * @param array<string, string> $flat Flat translations array
+     *
+     * @return array<string, mixed> Nested array
+     */
     private static function unflattenArray(array $flat): array
     {
         $flatWithoutPrefix = [];

@@ -15,9 +15,9 @@ module.exports = {
     devtool: isDev ? 'eval-source-map' : 'source-map',
     context: path.resolve(__dirname, 'assets/builder'),
     entry: {
-        'grape-builder': './app.js',        // JS principal
-        'grapesjs': './grapesjs.css.js',    // CSS de base
-        'custom': './custom.scss.js',       // CSS custom
+        'grape-builder': './app.js',        // Main JS
+        'grapesjs': './grapesjs.css.js',    // Base CSS
+        'custom': './custom.scss.js',       // Custom CSS
     },
     output: {
         path: outputPath,
@@ -30,7 +30,7 @@ module.exports = {
                 use: [MiniCssExtractPlugin.loader, 'css-loader'],
             },
             {
-                test: /\.s[ac]ss$/i, // scss ou sass
+                test: /\.s[ac]ss$/i, // scss or sass
                 use: [
                     MiniCssExtractPlugin.loader,
                     'css-loader',

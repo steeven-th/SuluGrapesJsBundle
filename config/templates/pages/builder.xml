@@ -1,13 +1,11 @@
 <?xml version="1.0" ?>
 <template xmlns="http://schemas.sulu.io/template/template"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xmlns:xi="http://www.w3.org/2001/XInclude"
           xsi:schemaLocation="http://schemas.sulu.io/template/template http://schemas.sulu.io/template/template-1.0.xsd">
     <key>builder</key>
 
     <view>@ItechWorldSuluGrapesJs/pages/builder</view>
-    <!-- <controller>Sulu\Bundle\WebsiteBundle\Controller\DefaultController::indexAction</controller> -->
-    <controller>ItechWorld\SuluGrapesJsBundle\Controller\Website\PageBuilderController::indexAction</controller>
+    <controller>Sulu\Content\UserInterface\Controller\Website\ContentController::indexAction</controller>
     <cacheLifetime>604800</cacheLifetime>
 
     <meta>
@@ -27,7 +25,7 @@
             <tag name="sulu.rlp.part"/>
         </property>
 
-        <property name="url" type="resource_locator" mandatory="true">
+        <property name="url" type="route" mandatory="true">
             <meta>
                 <title>itech_world.grapesjs.permalink</title>
             </meta>

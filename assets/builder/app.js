@@ -152,7 +152,7 @@ async function publish(publishUrl) {
     const publishButton = document.querySelector('#publish');
     const publishIcon = publishButton.querySelector('i');
 
-    // Changer la couleur en orange pendant la publication
+    // Change color to orange during publishing
     publishIcon.style.color = 'orange';
     publishButton.disabled = true;
 
@@ -164,12 +164,12 @@ async function publish(publishUrl) {
 
         const responseData = await response.json();
         if (!response.ok || !responseData.success) {
-            throw new Error(responseData.error || 'Erreur serveur');
+            throw new Error(responseData.error || 'Server error');
         }
 
         publishButton.disabled = true;
 
-        // Remettre la couleur par défaut après 2 secondes
+        // Reset color to default after 1 second
         setTimeout(() => {
             publishIcon.style.color = '';
         }, 1000);
@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Commande custom pour ouvrir l'Asset Manager filtré sur les documents
+    // Custom command to open the Asset Manager filtered on documents
     editor.Commands.add('open-document-asset', {
         run(editor, sender, opts = {}) {
             editor.runCommand('open-assets', {
@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
     });
 
-    // Ajout du composant DOCUMENT (lien ou bouton vers un fichier)
+    // Add DOCUMENT component (link or button to a file)
     editor.DomComponents.addType('document-link', {
         isComponent(el) {
             if (el.tagName === 'A' && el.classList.contains('gjs-document-link')) {
@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
     });
 
-    // Ajout du block DOCUMENT-LINK dans le block manager
+    // Add DOCUMENT-LINK block to the block manager
     editor.BlockManager.add('document-link', {
         label: t('blocks.document'),
         category: 'Basic',
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
     });
 
-    // Gestion du clic sur le bouton de sauvegarde
+    // Handle save button click
     saveButton.addEventListener('click', () => {
         const data = editor.getProjectData();
         save(editor, data, saveUrl);
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     adjust();
     window.addEventListener('resize', adjust);
 
-    // Au composant update, vérifier que le html à réellement changé
+    // On component update, check if the HTML has actually changed
     editor.on('component:update', () => {
         if (editor.getHtml() !== jsonBuilderHtml || editor.getCss() !== jsonBuilderCss) {
             updateSaveIconState(true);
