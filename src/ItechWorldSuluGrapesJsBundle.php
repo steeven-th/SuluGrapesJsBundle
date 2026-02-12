@@ -17,6 +17,7 @@ class ItechWorldSuluGrapesJsBundle extends AbstractBundle
         ->children()
             ->scalarNode('frontend_css_path')->defaultValue('')->end()
             ->scalarNode('frontend_js_path')->defaultValue('')->end()
+            ->booleanNode('enable_standalone_builder')->defaultFalse()->end()
             ->arrayNode('images_formats')
                 ->useAttributeAsKey('key')
                 ->scalarPrototype()->end()
@@ -54,6 +55,7 @@ class ItechWorldSuluGrapesJsBundle extends AbstractBundle
     ): void {
         $container->parameters()->set('itech_world_sulu_grapesjs.frontend_css_path', $config['frontend_css_path']);
         $container->parameters()->set('itech_world_sulu_grapesjs.frontend_js_path', $config['frontend_js_path']);
+        $container->parameters()->set('itech_world_sulu_grapesjs.enable_standalone_builder', $config['enable_standalone_builder']);
         $container->parameters()->set('itech_world_sulu_grapesjs.images_formats', $config['images_formats']);
         $container->import('../config/services.yaml');
     }

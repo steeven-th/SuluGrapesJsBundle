@@ -111,3 +111,35 @@ body .rte-hilite-btn {
   display: flex;
   gap: 1rem;
 }
+
+/* Bandeau info en mode preview */
+.sulu-navbar--preview .sulu-navbar-preview-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 13px;
+  font-weight: normal;
+  color: rgba(245, 245, 245, 0.8);
+}
+.sulu-navbar--preview .sulu-navbar-preview-info i {
+  color: #52b6ca;
+}
+.sulu-navbar--preview .sulu-navbar-sync-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid #52b6ca;
+  background: transparent;
+  color: #52b6ca;
+  cursor: pointer;
+  font-size: 12px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 3px;
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s;
+}
+.sulu-navbar--preview .sulu-navbar-sync-btn:hover {
+  background-color: #52b6ca;
+  color: #fff;
+}

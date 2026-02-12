@@ -5,7 +5,7 @@
     <key>builder</key>
 
     <view>@ItechWorldSuluGrapesJs/pages/builder</view>
-    <controller>Sulu\Content\UserInterface\Controller\Website\ContentController::indexAction</controller>
+    <controller>ItechWorld\SuluGrapesJsBundle\Controller\Website\BuilderContentController::indexAction</controller>
     <cacheLifetime>604800</cacheLifetime>
 
     <meta>

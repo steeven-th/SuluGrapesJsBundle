@@ -9,9 +9,6 @@
     <a href="LICENSE" target="_blank">
         <img src="https://img.shields.io/badge/license-MIT-green" alt="GitHub license">
     </a>
-    <a href="https://github.com/steeven-th/SuluGrapesJsBundle/releases" target="_blank">
-        <img src="https://img.shields.io/badge/release-v0.1.8-b-blue" alt="GitHub tag (latest SemVer)">
-    </a>
     <a href="https://sulu.io/" target="_blank">
         <img src="https://img.shields.io/badge/sulu_compatibility-%3E=3.0-cyan" alt="Sulu compatibility">
     </a>
@@ -27,8 +24,8 @@ SuluGrapesJsBundle extends the Sulu CMS to offer GrapesJS editor integration in 
 
 * Add Builder template page in Sulu Admin
 * GrapesJS integration in Sulu Admin for content editing **(only BODY content)**
-* Builder button in Sulu Admin for open a new tab with the Builder
-* Builder in Sulu Preview **(⚠️ Experimental approach – works, but not recommended for production)**
+* Builder integrated in Sulu Preview with live synchronization (changes are synced to the Sulu form, enabling save/publish via the Sulu toolbar)
+* Optional standalone builder mode (opens the editor in a separate tab)
 * Asset Manager in Builder **(ℹ️ Currently, you have access to all images and documents from Sulu. Soon, we will add video from Sulu and Youtube)**
 
 ## 🇬🇧 Available translations
@@ -76,17 +73,15 @@ php bin/console assets:install --symlink
 
 ### Configuration
 
-#### ***FRONT***
-
 Create a `config/packages/itech_world_sulu_grapejs.yaml` file with the following content:
 ```yaml
 itech_world_sulu_grapes_js:
-    frontend_css_path: '/styles/app.css' # Path to the front CSS file
-    frontend_js_path: '/js/app.js' # Path to the front JS file
     images_formats: # Images formats to use in the editor
         1920x: '1920x'
         sulu-400x400: 'sulu-400x400'
 ```
+
+> **Note:** In preview mode, the GrapeJS canvas automatically inherits all stylesheets and scripts loaded by Sulu's preview system. No additional configuration is needed — your frontend styles are applied to the canvas content out of the box.
 
 #### ***BACK***
 
@@ -125,19 +120,21 @@ yarn install
 yarn build
 ```
 
-![Builder page](./doc/images/builder_page.png)
+## 🖼️ Builder in Preview (Recommended)
 
-![Admin page](./doc/images/admin_page.png)
+The recommended way to use the GrapeJS editor is directly inside the Sulu Preview panel. Changes made in the editor are automatically synchronized with the Sulu form, so you can save and publish using the native Sulu toolbar buttons.
 
-## ⚠️ Add builder in Preview
-
-If you want, you can add the Builder in Sulu Preview.
-
-**This is not the best way to do it, but it works. We recommend to use the Builder button in the Sulu Admin to open a new tab with the Builder**
+**How it works:**
+- An info banner replaces the save/publish buttons in preview mode (no duplicates with Sulu's own buttons)
+- Every edit silently marks the Sulu form as "dirty" (you'll get the "unsaved changes" warning when navigating away)
+- Use the **Sync** button or **Ctrl+S / Cmd+S** to explicitly push changes to the Sulu form (triggers a preview refresh)
+- When you click **Save** in Sulu, pending builder changes are automatically injected before saving — even without clicking Sync
 
 ![Admin page builder](./doc/images/admin_page_builder.png)
 
-For that, create a `templates/bundles/SuluWebsiteBundle/Preview/preview.html.twig` file with the following content:
+The `BuilderContentController` automatically injects all required variables (`publish_state`, `translations`, `frontend_css_path`, `frontend_js_path`, `images_formats`, `template`, `webspace`, `locale`, `id`) into the template context for both frontend rendering and preview mode.
+
+To enable the GrapeJS editor in preview, create a `templates/bundles/SuluWebsiteBundle/Preview/preview.html.twig` file with the following content:
 ```twig
 {% extends "@!SuluWebsite/Preview/preview.html.twig" %}
 
@@ -154,13 +151,6 @@ For that, create a `templates/bundles/SuluWebsiteBundle/Preview/preview.html.twi
         {% include "@ItechWorldSuluGrapesJs/components/_builder_sulu_body.html.twig" with {
             json_builder_html: content.json_builder_html,
             json_builder_css: content.json_builder_css,
-            locale: request.defaultLocale,
-            webspace: request.webspaceKey,
-            id: id,
-            translations: translations,
-            frontend_css_path: frontend_css_path,
-            frontend_js_path: frontend_js_path,
-            previewContentReplacer: previewContentReplacer,
         } %}
     {% else %}
         {{ previewContentReplacer|raw }}
@@ -176,6 +166,35 @@ For that, create a `templates/bundles/SuluWebsiteBundle/Preview/preview.html.twi
     {% endif %}
 {% endblock %}
 ```
+
+> **Note:** The variables `locale`, `webspace`, `id`, `translations`, `frontend_css_path`, `frontend_js_path`, `images_formats`, and `previewContentReplacer` are automatically available in the template context thanks to `BuilderContentController`. You only need to explicitly pass `json_builder_html` and `json_builder_css` from the `content` object.
+
+## 🔧 Standalone Builder (Optional)
+
+If you prefer to open the GrapeJS editor in a separate tab instead of using the preview, you can enable the standalone builder mode. This adds an "Open Builder" button in the Sulu Admin toolbar for pages using the `builder` template.
+
+In your `config/packages/itech_world_sulu_grapejs.yaml`:
+```yaml
+itech_world_sulu_grapes_js:
+    enable_standalone_builder: true
+    frontend_css_path: '/styles/app.css' # Required for standalone: path to the front CSS file
+    frontend_js_path: '/js/app.js' # Required for standalone: path to the front JS file
+```
+
+> **Important:** `frontend_css_path` and `frontend_js_path` are **only needed for standalone mode**. The standalone builder opens in a separate tab outside of Sulu's preview, so it cannot auto-detect frontend assets. You must provide the paths manually. In preview mode, assets are detected automatically.
+
+Then clear the admin cache:
+```bash
+php bin/adminconsole cache:clear
+```
+
+In standalone mode, the builder has its own Save and Publish buttons that communicate directly with the Sulu API.
+
+> **Note:** Both modes can coexist. When `enable_standalone_builder` is `true`, the builder is available both in preview and via the toolbar button.
+
+![Builder page](./doc/images/builder_page.png)
+
+![Admin page](./doc/images/admin_page.png)
 
 ## 🐛 Bug and Idea
 

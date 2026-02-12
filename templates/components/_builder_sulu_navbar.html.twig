@@ -1,13 +1,29 @@
-<div class="sulu-navbar">
-	<span>GrapesJS Builder</span>
-	<div class="sulu-navbar-btn-group">
-		<button id="save" disabled>
-			<i class="fa fa-save"></i>
-			{{ 'grapesjs.buttons.save'|trans({}, 'grapesjs') }}
-		</button>
-		<button id="publish" {% if publish_state %} disabled {% endif %}>
-			<i class="fa fa-save"></i>
-			{{ 'grapesjs.buttons.publish'|trans({}, 'grapesjs') }}
+{% if previewContentReplacer is defined %}
+	{# Preview mode: info banner + Sync button #}
+	<div class="sulu-navbar sulu-navbar--preview">
+		<span>GrapesJS Builder</span>
+		<div class="sulu-navbar-preview-info">
+			<i class="fa fa-info-circle"></i>
+			{{ 'grapesjs.preview.info_banner'|trans({}, 'grapesjs') }}
+		</div>
+		<button id="preview-sync" class="sulu-navbar-sync-btn">
+			<i class="fa fa-refresh"></i>
+			{{ 'grapesjs.preview.sync_button'|trans({}, 'grapesjs') }}
 		</button>
 	</div>
-</div>
+{% else %}
+	{# Standalone mode (separate tab): Save/Publish buttons #}
+	<div class="sulu-navbar">
+		<span>GrapesJS Builder</span>
+		<div class="sulu-navbar-btn-group">
+			<button id="save" disabled>
+				<i class="fa fa-save"></i>
+				{{ 'grapesjs.buttons.save'|trans({}, 'grapesjs') }}
+			</button>
+			<button id="publish" {% if publish_state|default(false) %} disabled {% endif %}>
+				<i class="fa fa-save"></i>
+				{{ 'grapesjs.buttons.publish'|trans({}, 'grapesjs') }}
+			</button>
+		</div>
+	</div>
+{% endif %}
