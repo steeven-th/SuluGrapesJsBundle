@@ -1,95 +1,211 @@
-name: Auto Update Version and Create Tag
+name: ⚙️ Auto Release
 
 on:
   pull_request:
-    types:
-      - closed
-    branches:
-      - main
+    types: [ closed ]
+    branches: [ main ]
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 1.2.3, 1.2.3-beta, 0.1.6-b)'
+        required: true
+        type: string
+      force:
+        description: 'Force release even if tag exists'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  update_version:
+  release:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    # Condition adapted for both trigger types
+    if: |
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       github.event.pull_request.head.ref == 'dev') ||
+      (github.event_name == 'workflow_dispatch')
 
     steps:
-      -   name: Checkout repository
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      -   name: Set up Node.js
-          uses: actions/setup-node@v4
-          with:
-            node-version: '22'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-      # Étape 1 : Extraire le numéro de version depuis le titre de la PR
-      -   name: Extract version from PR title
-          id: extract_version
-          run: |
-            PR_TITLE="${{ github.event.pull_request.title }}"
-            VERSION=$(echo "$PR_TITLE" | grep -oP '\d+\.\d+\.\d+(?:[a-zA-Z0-9\.-]+)?')
-            if [ -z "$VERSION" ]; then
-              echo "❌ No valid version (e.g. 1.2.3, 1.2.3-b, 1.2.3-beta) found in PR title: $PR_TITLE"
+      # Adapted version extraction logic
+      - name: Determine version
+        id: determine_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Version from manual input
+            INPUT_VERSION="${{ github.event.inputs.version }}"
+
+            # Format validation
+            if ! echo "$INPUT_VERSION" | grep -qP '^v?\d+\.\d+\.\d+(?:-[a-zA-Z0-9\.-]+)?(?:\+[a-zA-Z0-9\.-]+)?$'; then
+              echo "❌ Invalid version format: '$INPUT_VERSION'"
+              echo "💡 Expected: '1.2.3', '1.2.3-beta', '1.2.3-rc.1'"
               exit 1
             fi
-            echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # Étape 2 : Mettre à jour la version dans les fichiers
-      -   name: Update version in files
-          run: |
-            VERSION=${{ env.VERSION }}
-            ESCAPED_VERSION=$(echo $VERSION | sed 's/[.[\*^$]/\\&/g')
-            sed -i "s/release-v[0-9]*\.[0-9]*\.[0-9]*/release-v$ESCAPED_VERSION/" README.md
-            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" composer.json
-            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" public/js/package.json
-            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
-            echo "✅ Updated version to $VERSION"
+            VERSION=$(echo "$INPUT_VERSION" | sed 's/^v//')
+            TRIGGER_TYPE="manual"
 
-      # Étape 3 : Générer le changelog
-      - name: Install changelog dependencies
+          else
+            # Version from PR title
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            VERSION=$(echo "$PR_TITLE" | grep -oP 'v?\d+\.\d+\.\d+(?:-[a-zA-Z0-9\.-]+)?(?:\+[a-zA-Z0-9\.-]+)?')
+
+            if [ -z "$VERSION" ]; then
+              echo "❌ No valid version found in: '$PR_TITLE'"
+              echo "💡 Format: 'Release v1.2.3' or 'feat: new feature v1.2.3'"
+              exit 1
+            fi
+
+            VERSION=$(echo "$VERSION" | sed 's/^v//')
+            TRIGGER_TYPE="pr"
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG_VERSION=v$VERSION" >> $GITHUB_ENV
+          echo "TRIGGER_TYPE=$TRIGGER_TYPE" >> $GITHUB_ENV
+          echo "✅ Version: $VERSION (triggered by: $TRIGGER_TYPE)"
+
+      # Conditional tag existence check
+      - name: Check if version already exists
+        run: |
+          if git tag | grep -q "^v${{ env.VERSION }}$"; then
+            if [ "${{ github.event.inputs.force }}" == "true" ]; then
+              echo "⚠️ Tag v${{ env.VERSION }} exists but force=true, continuing..."
+              echo "🗑️ Deleting existing tag..."
+              git tag -d "v${{ env.VERSION }}" || true
+              git push --delete origin "v${{ env.VERSION }}" || true
+            else
+              echo "❌ Tag v${{ env.VERSION }} already exists!"
+              echo "💡 Use 'force=true' to override or choose a different version"
+              exit 1
+            fi
+          else
+            echo "✅ Version v${{ env.VERSION }} is available"
+          fi
+
+      # Branch validation for manual trigger
+      - name: Validate branch for manual trigger
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          CURRENT_BRANCH=$(git branch --show-current)
+          if [ "$CURRENT_BRANCH" != "main" ]; then
+            echo "⚠️ Manual release triggered from '$CURRENT_BRANCH' instead of 'main'"
+            echo "🔄 Switching to main branch..."
+            git checkout main
+            git pull origin main
+          fi
+
+      - name: Install dependencies
         run: |
           npm install --save-dev conventional-changelog-cli conventional-changelog-angular
 
       - name: Generate changelog
         run: |
+          if [ ! -f CHANGELOG.md ]; then
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          echo "📝 Generating changelog..."
           npx conventional-changelog -p angular -i CHANGELOG.md -s
 
-      # Étape 4 : Commit et push des changements
-      -   name: Commit and push changes
-          run: |
-            git config --local user.name "GitHub Action"
-            git config --local user.email "action@github.com"
-            git checkout main
-            git add README.md composer.json public/js/package.json package.json CHANGELOG.md
-            git commit -m "chore(release): update version to $VERSION"
-            git push origin main
-
-      # Étape 5 : Créer un tag
-      -   name: Create and push tag
-          run: |
-            VERSION=${{ env.VERSION }}
-            git tag -a "$VERSION" -m "Release version $VERSION"
-            git push origin "$VERSION"
-
-      # Étape 6 : Créer une GitHub Release
-      - name: Generate latest changelog
+      - name: Commit and push changes
         run: |
-          npx conventional-changelog -p angular -r 1 > latest-changelog.md
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet CHANGELOG.md; then
+            echo "📝 No changelog changes to commit"
+          else
+            git add CHANGELOG.md
+
+            if [ "${{ env.TRIGGER_TYPE }}" == "manual" ]; then
+              COMMIT_MSG="chore(release): update changelog for v${{ env.VERSION }} [manual release]"
+            else
+              COMMIT_MSG="chore(release): update changelog for v${{ env.VERSION }}"
+            fi
+
+            git commit -m "$COMMIT_MSG"
+            git push origin main
+            echo "✅ Changelog committed and pushed"
+          fi
+
+      - name: Create and push tag
+        run: |
+          if [ "${{ env.TRIGGER_TYPE }}" == "manual" ]; then
+            TAG_MSG="Release version ${{ env.VERSION }} (manual release by ${{ github.actor }})"
+          else
+            TAG_MSG="Release version ${{ env.VERSION }}"
+          fi
+
+          git tag -a "${{ env.TAG_VERSION }}" -m "$TAG_MSG"
+          git push origin "${{ env.TAG_VERSION }}"
+          echo "🏷️ Tag ${{ env.TAG_VERSION }} created and pushed"
+
+      - name: Generate release notes
+        run: |
+          echo "📝 Generating release notes..."
+
+          # Generate release notes
+          npx conventional-changelog -p angular -r 1 --output-unreleased > latest-changelog.md
+
+          # Add a note if this is a manual trigger
+          if [ "${{ env.TRIGGER_TYPE }}" == "manual" ]; then
+            echo "" >> latest-changelog.md
+            echo "---" >> latest-changelog.md
+            echo "" >> latest-changelog.md
+            echo "🚀 **Manual release triggered by @${{ github.actor }}**" >> latest-changelog.md
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.VERSION }}
-          name: "Release ${{ env.VERSION }}"
+          tag_name: ${{ env.TAG_VERSION }}
+          name: "Release ${{ env.TAG_VERSION }}"
           body_path: latest-changelog.md
+          draft: false
+          prerelease: ${{ contains(env.VERSION, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Étape 7 : Fusionner main dans dev pour synchroniser
-      -   name: Merge main into dev
-          run: |
+      - name: Merge main into dev
+        # Only if we are on main and dev branch exists
+        run: |
+          if git show-ref --verify --quiet refs/remotes/origin/dev; then
+            echo "🔄 Synchronizing dev branch..."
+            git fetch origin dev
             git checkout dev
-            git pull origin dev
-            git merge main
+            git merge main --no-ff -m "chore: sync dev with main after release ${{ env.TAG_VERSION }}"
             git push origin dev
+            echo "✅ Dev branch synchronized"
+          else
+            echo "ℹ️ No dev branch found, skipping sync"
+          fi
+
+      # Success notification
+      - name: Release summary
+        run: |
+          echo "🎉 **Release Summary**"
+          echo "✅ Version: ${{ env.TAG_VERSION }}"
+          echo "✅ Trigger: ${{ env.TRIGGER_TYPE }}"
+          echo "✅ Actor: ${{ github.actor }}"
+          echo "✅ Packagist will auto-update within 5-10 minutes"
+          echo ""
+          echo "🔗 **Links:**"
+          echo "- Release: https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG_VERSION }}"
+          echo "- Packagist: https://packagist.org/packages/itech-world/sulu-article-twig-extension-filter-bundle"

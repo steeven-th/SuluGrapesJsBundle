@@ -31,21 +31,20 @@ class ItechWorldSuluGrapesJsBundle extends AbstractBundle
         ContainerConfigurator $container,
         ContainerBuilder $builder,
     ): void {
-        $builder->prependExtensionConfig(
-            'sulu_core',
-            [
-                'content' => [
-                    'structure' => [
-                        'paths' => [
-                            'builder_page' => [
-                                'path' => __DIR__ . '/../config/templates/pages',
-                                'type' => 'page',
+        if ($builder->hasExtension('sulu_admin')) {
+            $builder->prependExtensionConfig(
+                'sulu_admin',
+                [
+                    'templates' => [
+                        'page' => [
+                            'directories' => [
+                                'grapesjs_builder' => __DIR__ . '/../config/templates/pages',
                             ],
                         ],
                     ],
                 ],
-            ],
-        );
+            );
+        }
     }
 
     public function loadExtension(

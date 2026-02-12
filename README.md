@@ -13,7 +13,7 @@
         <img src="https://img.shields.io/badge/release-v0.1.8-b-blue" alt="GitHub tag (latest SemVer)">
     </a>
     <a href="https://sulu.io/" target="_blank">
-        <img src="https://img.shields.io/badge/sulu_compatibility-%3E=2.6-cyan" alt="Sulu compatibility">
+        <img src="https://img.shields.io/badge/sulu_compatibility-%3E=3.0-cyan" alt="Sulu compatibility">
     </a>
 </p>
 SuluGrapesJsBundle extends the Sulu CMS to offer GrapesJS editor integration in Sulu Admin for content editing
@@ -21,7 +21,7 @@ SuluGrapesJsBundle extends the Sulu CMS to offer GrapesJS editor integration in 
 ## 📂 Requirements
 
 * PHP ^8.2
-* Sulu ^2.6.*
+* Sulu ^3.0.*
 
 ## 🛠️ Features
 
@@ -64,7 +64,7 @@ If you don't use Symfony Flex, you can add the bundle to your `config/bundles.ph
 ```php
 return [
     // ...
-    ItechWorld\SuluGrapesJsBundle\ItechWorldSuluGrapesJsBundle::class => true,
+    ItechWorld\SuluGrapesJsBundle\ItechWorldSuluGrapesJsBundle::class => ['all' => true],
 ];
 ```
 
