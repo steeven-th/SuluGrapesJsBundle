@@ -1,3 +1,28 @@
+#  (2026-02-12)
+
+
+* feat!: migrate bundle to Sulu 3.0 compatibility ([69a2cab](https://github.com/steeven-th/SuluGrapesJsBundle/commit/69a2cab43827a72ecf944e7fa0d71dd3b74ccc4d))
+
+
+### BREAKING CHANGES
+
+* This version drops Sulu 2.x support entirely.
+
+- Replace sulu_core.content.structure.paths with sulu_admin.templates.page.directories
+- Replace DocumentManager APIs with PageRepositoryInterface + ContentManagerInterface
+- Replace WebsiteController/StructureInterface with ContentController::indexAction
+- Replace WorkflowStageBehavior (int) with WorkflowInterface::getWorkflowPlace() (string)
+- Replace resource_locator type with route in builder.xml template
+- Update admin view constant from .details to .content
+- Remove obsolete PageBuilderController (Website) and WebsitePreviewController
+- Rewrite admin PageBuilderController with Sulu 3.0 APIs (resolve/persist/applyTransition)
+- Clean up services.yaml: remove DocumentManager and WebsiteController aliases
+- Update composer.json requirement to sulu/sulu ^3.0
+- Translate all comments to English
+- Consolidate release workflow
+
+
+
 ## [0.1.8](https://github.com/steeven-th/SuluGrapesJsBundle/compare/0.1.7...0.1.8) (2025-07-03)
 
 
