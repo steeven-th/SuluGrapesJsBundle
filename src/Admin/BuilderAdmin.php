@@ -11,8 +11,8 @@ use Sulu\Bundle\AdminBundle\Admin\View\ToolbarAction;
 
 class BuilderAdmin extends Admin
 {
-    public const ORIGINAL_VIEW = 'sulu_page.page_edit_form';
-    public const CUSTOM_VIEW = 'sulu_page.page_edit_form';
+    public const ORIGINAL_VIEW = 'sulu_page.page_edit_form.content';
+    public const CUSTOM_VIEW = 'sulu_page.page_edit_form.content';
 
     public function __construct(
         private ViewBuilderFactoryInterface $viewBuilderFactory,
