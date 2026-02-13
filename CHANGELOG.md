@@ -1,3 +1,7 @@
+# [](https://github.com/steeven-th/SuluGrapesJsBundle/compare/v1.1.1...v) (2026-02-13)
+
+
+
 # [](https://github.com/steeven-th/SuluGrapesJsBundle/compare/v1.1.0...v) (2026-02-12)
 
 
